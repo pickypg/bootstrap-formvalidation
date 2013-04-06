@@ -68,7 +68,7 @@
         .toggleClass('success', ready)
         .toggleClass('error', !ready)
         .attr('data-ready', ready).data('ready', ready)
-        .trigger('validated.ready', {control: this})
+        .trigger('validated.ready', {control: this, ready: ready})
     }
 
   , ready: function () {
