@@ -1,0 +1,27 @@
+{
+    "name": "bootstrap0formvalidation"
+  , "description": "Simple HTML5 form validation to simplify bootstrap forms."
+  , "version": "0.1"
+  , "keywords": ["formvalidation", "validation", "bootstrap", "js"]
+  , "homepage": "https://github.com/pickypg/bootstrap-formvalidation/"
+  , "author": "Chris Earle"
+  /*, "scripts": { "test": "make test" }*/
+  , "repository": {
+      "type": "git"
+    , "url": "https://github.com/pickypg/bootstrap-formvalidation"
+  }
+  , "licenses": [
+    {
+        "type": "Apache-2.0"
+      , "url": "http://www.apache.org/licenses/LICENSE-2.0"
+    }
+  ]
+  , "devDependencies": {
+      "bootstrap": "2.3.1"
+      "uglify-js": "1.3.4"
+    , "jshint": "0.9.1"
+    , "recess": "1.1.6"
+    , "connect": "2.1.3"
+    , "hogan.js": "2.0.0"
+  }
+}
