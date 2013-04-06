@@ -1,0 +1,9 @@
+{
+    "name": "pickypg/bootstrap-formvalidation"
+  , "description": "Simple HTML5 form validation to simplify bootstrap forms."
+  , "keywords": ["formvalidation", "validation", "bootstrap", "js"]
+  , "homepage": "https://github.com/pickypg/bootstrap-formvalidation/"
+  , "author": "Chris Earle"
+  , "license": "Apache-2.0"
+
+}
