@@ -53,7 +53,7 @@
         , index = $.inArray(name, this.invalid)
         , invalid = index > -1
 
-      if (e.valid == invalid) {
+      if (e.valid === invalid) {
         if (e.valid && invalid) this.invalid.splice(index, 1)
         else if (!e.valid && !invalid) this.invalid.push(name)
 
@@ -72,7 +72,7 @@
     }
 
   , ready: function () {
-      return this.invalid.length == 0
+      return this.invalid.length === 0
     }
   }
 
