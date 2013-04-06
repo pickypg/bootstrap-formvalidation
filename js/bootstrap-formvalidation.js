@@ -123,6 +123,8 @@
           }
         }
       }
+      
+      return this.valid
     }
 
   , keydown: function (e) {
