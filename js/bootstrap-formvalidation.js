@@ -71,6 +71,16 @@
       }
     }
 
+  , unwire: function () {
+      this.$element
+        .off('focus.formValidation')
+        .off('blur.formValidation')
+        .off('keypress.formValidation')
+        .off('keyup.formValidation')
+        .off('keydown.formValidation')
+        .off('change.formValidation')
+    }
+
   // taken directly from bootstrap-typeahead
   , eventSupported: function(eventName) {
       var isSupported = eventName in this.$element
