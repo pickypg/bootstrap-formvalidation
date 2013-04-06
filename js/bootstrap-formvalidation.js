@@ -88,7 +88,7 @@
     }
 
   , checker: function (value) {
-      return value == ""
+      return value === ""
     }
 
   , retriever: function () {
@@ -100,7 +100,7 @@
         , value = this.retriever()
         , empty = this.checker(value)
 
-      if (value != this.value) {
+      if (value !== this.value) {
         this.value = value
 
         if ($.isFunction(this.pattern)) this.valid = this.pattern(value)
