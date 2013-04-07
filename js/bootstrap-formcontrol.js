@@ -44,12 +44,18 @@
     }
 
   , remove: function ($controls) {
-      $controls.off('validated.formControl')
+      var control = this
+      $controls.off('validated.formControl').each(function() {
+        var name = control.name($(this))
+          , index = $.inArray(name, control.invalid)
+
+        if (index > -1) control.invalid.splice(index, 1)
+      })
     }
 
   , validated: function (e) {
       var ready = this.ready()
-        , name = e.validation.$element.attr('id')
+        , name = this.name(e.validation.$element)
         , index = $.inArray(name, this.invalid)
         , invalid = index > -1
 
@@ -57,18 +63,22 @@
         if (e.valid && invalid) this.invalid.splice(index, 1)
         else if (!e.valid && !invalid) this.invalid.push(name)
 
-        if (ready != this.ready()) this.updater(!ready)
+        if (ready !== this.ready()) this.updater(!ready)
       }
     }
 
   , updater: function (ready) {
-      // setting both attr and data because a bug sometimes does not have it
-      //  load
+      // setting both attr and data because JQuery does not pick up 'data'
+      //  from attributes that get set by attr after adding to the DOM
       this.$element
         .toggleClass('success', ready)
         .toggleClass('error', !ready)
         .attr('data-ready', ready).data('ready', ready)
         .trigger('validated.ready', {control: this, ready: ready})
+    }
+
+  , name: function ($element) {
+      return $element.attr('name') || $element.attr('id')
     }
 
   , ready: function () {
