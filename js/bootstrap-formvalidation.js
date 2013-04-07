@@ -27,7 +27,8 @@
     this.options = $.extend({}, $.fn.formValidation.defaults, options)
     this.required = this.options.required || this.$element.is('[required]')
     this.multi = this.options.multi || this.$element.is("[type='radio']")
-    this.name = this.options.name || this.$element.data('name')
+    this.name = this.options.name || this.$element.data('name') || ""
+    this.match = this.options.match || this.$element.data('match')
     this.object = this.options.object
     this.key = this.options.key || this.key
     this.keyup = this.options.keyup || this.keyup
@@ -35,14 +36,22 @@
     this.keypress = this.options.keypress || this.keypress
     this.blur = this.options.blur || this.blur
     this.focus = this.options.focus || this.focus
+    this.setup = this.options.setup || this.setup
     this.listen = this.options.listen || this.listen
     this.updater = this.options.updater || this.updater
     this.checker = this.options.checker || this.checker
     this.validate = this.options.validate || this.validate
     this.retriever = this.options.retriever || this.retriever
+    this.elementUpdater = this.options.elementUpdater || this.elementUpdater
+    this.singleRetriever = this.options.singleRetriever || this.singleRetriever
     this.multiRetriever = this.options.multiRetriever || this.multiRetriever
+    this.matchRetriever = this.options.matchRetriever || this.matchRetriever
+    this.updateable = this.options.updateable || this.updateable
     this.objectUpdater = this.options.objectUpdater || this.objectUpdater
     this.objectNames = this.options.objectNames || this.objectNames
+    this.equals = this.options.equals || this.equals
+    this.setupListeners = this.options.setupListeners || this.setupListeners
+    this.unwireListeners = this.options.unwireListeners || this.unwireListeners
     this.valid = this.options.valid
     if (this.options.pattern) {
       this.pattern = this.options.pattern
@@ -56,6 +65,7 @@
     else {
       this.pattern = /[^\s]*/
     }
+    this.setup()
     this.listen()
     this.validate()
   }
@@ -64,27 +74,44 @@
 
     constructor: FormValidation
 
-  , listen: function () {
-      this.$element
-        .on('focus.formValidation',    $.proxy(this.focus, this))
-        .on('blur.formValidation',     $.proxy(this.blur, this))
-        .on('keypress.formValidation', $.proxy(this.keypress, this))
-        .on('keyup.formValidation',    $.proxy(this.keyup, this))
-        .on('change.formValidation',   $.proxy(this.change, this))
+  , setupListeners: function ($element, plugin) {
+      $element
+        .on('focus' + plugin,    $.proxy(this.focus, this))
+        .on('blur' + plugin,     $.proxy(this.blur, this))
+        .on('keypress' + plugin, $.proxy(this.keypress, this))
+        .on('keyup' + plugin,    $.proxy(this.keyup, this))
+        .on('change' + plugin,   $.proxy(this.change, this))
 
       if (this.eventSupported('keydown')) {
-        this.$element.on('keydown.formValidation', $.proxy(this.keydown, this))
+        $element.on('keydown' + plugin, $.proxy(this.keydown, this))
       }
     }
 
+  , unwireListeners: function ($element, plugin) {
+      $element
+        .off('focus' + plugin)
+        .off('blur' + plugin)
+        .off('keypress' + plugin)
+        .off('keyup' + plugin)
+        .off('keydown' + plugin)
+        .off('change' + plugin)
+    }
+
+  , setup: function() {
+      if (this.match) {
+        this.$match = this.options.$match || $("#" + this.match)
+        this.setupListeners(this.$match, '.formValidationMatch')
+      }
+    }
+
+  , listen: function () {
+      this.setupListeners(this.$element, '.formValidation')
+    }
+
   , unwire: function () {
-      this.$element
-        .off('focus.formValidation')
-        .off('blur.formValidation')
-        .off('keypress.formValidation')
-        .off('keyup.formValidation')
-        .off('keydown.formValidation')
-        .off('change.formValidation')
+      this.unwireListeners(this.$element, '.formValidation')
+
+      if (this.$match) this.unwireListeners(this.$match, '.formValidationMatch')
     }
 
   // taken directly from bootstrap-typeahead
@@ -97,13 +124,23 @@
       return isSupported
   }
 
-  , updater: function (value) {
-      this.$element.parents(".control-group")
-        .toggleClass("error", !this.empty && !this.valid)
-        .attr('data-valid', this.valid)
-
-      if (this.valid && this.object) this.objectUpdater(value)
+  , elementUpdater: function ($element, error) {
+      $element.parents(".control-group")
+        .toggleClass("error", error)
+        .attr('data-valid', this.valid).data('valid', this.valid)
     }
+
+  , updater: function (value) {
+      this.elementUpdater(this.$element, !this.empty && !this.valid)
+
+      if (this.$match) this.elementUpdater(this.$match, !this.matchEmpty && !this.valid)
+
+      if (this.valid && this.updateable()) this.objectUpdater(value)
+    }
+
+  , updateable: function () {
+      return this.name !== ""
+   }
 
   , objectNames: function () {
       return this.name.split(':')
@@ -124,7 +161,7 @@
     }
 
   , checker: function (value) {
-      return value === ""
+      return this.equals(value, "")
     }
 
   , multiRetriever: function () {
@@ -133,13 +170,38 @@
       return checked.length ? checked.val() : ""
     }
 
+  , singleRetriever: function () {
+      return this.$element.val()
+    }
+
+  , matchRetriever: function () {
+      return this.$match.val()
+    }
+
   , retriever: function () {
       var value = ""
 
       if (this.multi) value = this.multiRetriever()
-      else value = this.$element.val()
+      else value = this.singleRetriever()
 
       return value
+    }
+
+  , test: function (value) {
+      var valid = true
+
+      if (this.match) {
+        this.matchValue = this.matchRetriever()
+        this.matchEmpty = this.checker(this.matchValue)
+        valid = this.equals(this.matchValue, value)
+      }
+
+      if (valid) {
+        if ($.isFunction(this.pattern)) valid = this.pattern(value)
+        else valid = this.pattern.test(value)
+      }
+
+      return valid
     }
 
   , validate: function () {
@@ -147,16 +209,19 @@
         , value = this.retriever()
         , empty = this.checker(value)
 
-      if (value !== this.value) {
+      // matching ignores the short-circuiting of no value changes to avoid
+      //  complexities related to unknown details about matching that can be
+      //  quickly overridden in this.test(...)
+      if (this.match || !this.equals(value, this.value)) {
+        this.valid = this.test(value)
         this.value = value
 
-        if ($.isFunction(this.pattern)) this.valid = this.pattern(value)
-        else this.valid = this.pattern.test(value)
-
+        // optional fields can be empty
         if (!this.required && this.empty && !this.valid) this.valid = true
 
         if (this.valid || valid != this.valid || empty != this.empty) {
           this.empty = empty
+
           this.updater(value)
 
           this.$element
@@ -172,6 +237,10 @@
       }
 
       return this.valid
+    }
+
+  , equals: function(value1, value2) {
+      return value1 === value2
     }
 
   , keydown: function (e) {
@@ -231,7 +300,8 @@
   }
 
   $.fn.formValidation.defaults = {
-    object: null
+    match: false
+  , object: null
   , valid: true
   }
 
