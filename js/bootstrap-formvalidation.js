@@ -48,11 +48,13 @@
     this.matchRetriever = this.options.matchRetriever || this.matchRetriever
     this.updateable = this.options.updateable || this.updateable
     this.objectUpdater = this.options.objectUpdater || this.objectUpdater
+    this.trimmer = this.options.trimmer || this.trimmer
     this.objectNames = this.options.objectNames || this.objectNames
     this.equals = this.options.equals || this.equals
     this.setupListeners = this.options.setupListeners || this.setupListeners
     this.unwireListeners = this.options.unwireListeners || this.unwireListeners
     this.valid = this.options.valid
+    this.matchValid = this.options.matchValid
     if (this.options.pattern) {
       this.pattern = this.options.pattern
     }
@@ -133,7 +135,7 @@
   , updater: function (value) {
       this.elementUpdater(this.$element, !this.empty && !this.valid)
 
-      if (this.$match) this.elementUpdater(this.$match, !this.matchEmpty && !this.valid)
+      if (this.$match) this.elementUpdater(this.$match, !this.matchValid)
 
       if (this.valid && this.updateable()) this.objectUpdater(value)
     }
@@ -144,6 +146,10 @@
 
   , objectNames: function () {
       return this.name.split(':')
+    }
+
+  , trimmer: function (value) {
+      return $.trim(value)
     }
 
   , objectUpdater: function (value) {
@@ -157,7 +163,7 @@
         object = object[names[i]]
       }
 
-      object[names[length]] = value
+      object[names[length]] = this.trimmer(value)
     }
 
   , checker: function (value) {
@@ -188,17 +194,15 @@
     }
 
   , test: function (value) {
-      var valid = true
+      var valid
+
+      if ($.isFunction(this.pattern)) valid = this.pattern(value)
+      else valid = this.pattern.test(value)
 
       if (this.match) {
         this.matchValue = this.matchRetriever()
         this.matchEmpty = this.checker(this.matchValue)
-        valid = this.equals(this.matchValue, value)
-      }
-
-      if (valid) {
-        if ($.isFunction(this.pattern)) valid = this.pattern(value)
-        else valid = this.pattern.test(value)
+        this.matchValid = this.equals(this.matchValue, value)
       }
 
       return valid
@@ -224,8 +228,11 @@
 
           this.updater(value)
 
-          this.$element
-            .trigger({type: 'validated', validation: this, valid: this.valid})
+          // while this control may be itself valid, it must match its other to
+          //  be truly valid
+          valid = this.valid && this.matchValid
+
+          this.$element.trigger({type: 'validated', validation: this, valid: valid})
 
           if (valid) {
             this.$element.trigger({type: 'validated.valid', validation: this})
@@ -301,6 +308,7 @@
 
   $.fn.formValidation.defaults = {
     match: false
+  , matchValid: true
   , object: null
   , valid: true
   }
