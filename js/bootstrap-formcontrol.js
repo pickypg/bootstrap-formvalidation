@@ -45,12 +45,12 @@
     }
 
   , remove: function ($controls) {
-      var control = this
+      var that = this
       $controls.off('validated.formControl').each(function() {
-        var name = control.namer($(this))
-          , index = $.inArray(name, control.invalid)
+        var name = that.namer($(this))
+          , index = $.inArray(name, that.invalid)
 
-        if (index > -1) control.invalid.splice(index, 1)
+        if (index > -1) that.invalid.splice(index, 1)
       })
     }
 
@@ -70,7 +70,7 @@
 
   , updater: function (ready) {
       // setting both attr and data because JQuery does not pick up 'data'
-      //
+      //  from attributes that get set by attr after adding to the DOM
       this.$element
         .toggleClass('success', ready)
         .toggleClass('error', !ready)
