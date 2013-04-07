@@ -26,6 +26,9 @@
     this.$element = $(element)
     this.options = $.extend({}, $.fn.formValidation.defaults, options)
     this.required = this.options.required || this.$element.is('[required]')
+    this.multi = this.options.multi || this.$element.is("[type='radio']")
+    this.name = this.options.name || this.$element.data('name')
+    this.object = this.options.object
     this.key = this.options.key || this.key
     this.keyup = this.options.keyup || this.keyup
     this.keydown = this.options.keydown || this.keydown
@@ -37,6 +40,9 @@
     this.checker = this.options.checker || this.checker
     this.validate = this.options.validate || this.validate
     this.retriever = this.options.retriever || this.retriever
+    this.multiRetriever = this.options.multiRetriever || this.multiRetriever
+    this.objectUpdater = this.options.objectUpdater || this.objectUpdater
+    this.objectNames = this.options.objectNames || this.objectNames
     this.valid = this.options.valid
     if (this.options.pattern) {
       this.pattern = this.options.pattern
@@ -60,14 +66,14 @@
 
   , listen: function () {
       this.$element
-        .on('focus',    $.proxy(this.focus, this))
-        .on('blur',     $.proxy(this.blur, this))
-        .on('keypress', $.proxy(this.keypress, this))
-        .on('keyup',    $.proxy(this.keyup, this))
-        .on('change',   $.proxy(this.change, this))
+        .on('focus.formValidation',    $.proxy(this.focus, this))
+        .on('blur.formValidation',     $.proxy(this.blur, this))
+        .on('keypress.formValidation', $.proxy(this.keypress, this))
+        .on('keyup.formValidation',    $.proxy(this.keyup, this))
+        .on('change.formValidation',   $.proxy(this.change, this))
 
       if (this.eventSupported('keydown')) {
-        this.$element.on('keydown', $.proxy(this.keydown, this))
+        this.$element.on('keydown.formValidation', $.proxy(this.keydown, this))
       }
     }
 
@@ -95,14 +101,45 @@
       this.$element.parents(".control-group")
         .toggleClass("error", !this.empty && !this.valid)
         .attr('data-valid', this.valid)
+
+      if (this.valid && this.object) this.objectUpdater(value)
+    }
+
+  , objectNames: function () {
+      return this.name.split(':')
+    }
+
+  , objectUpdater: function (value) {
+      var object = this.object
+        , names = this.objectNames()
+        , length = names.length - 1
+        , i = 0
+
+      for ( ; i < length; ++i) {
+        if (object[names[i]] === undefined) object[names[i]] = {}
+        object = object[names[i]]
+      }
+
+      object[names[length]] = value
     }
 
   , checker: function (value) {
       return value === ""
     }
 
+  , multiRetriever: function () {
+      var checked = $("[name='" + this.$element.attr('name') + "']:checked")
+
+      return checked.length ? checked.val() : ""
+    }
+
   , retriever: function () {
-      return this.$element.val()
+      var value = ""
+
+      if (this.multi) value = this.multiRetriever()
+      else value = this.$element.val()
+
+      return value
     }
 
   , validate: function () {
@@ -133,7 +170,7 @@
           }
         }
       }
-      
+
       return this.valid
     }
 
@@ -194,7 +231,8 @@
   }
 
   $.fn.formValidation.defaults = {
-    valid: true
+    object: null
+  , valid: true
   }
 
   $.fn.formValidation.Constructor = FormValidation
