@@ -27,11 +27,12 @@
     this.$element = $(element)
     this.options = $.extend({}, $.fn.formControl.defaults, options)
     this.name = this.options.name || this.$element.data('name') || this.$element.attr('id')
-    this.ready = this.options.ready || this.$element.data('ready') || this.ready
+    this.ready = this.options.ready || this.ready
     this.add = this.options.add || this.add
     this.remove = this.options.remove || this.remove
     this.validated = this.options.validated || this.validated
     this.updater = this.options.updater || this.updater
+    this.namer = this.options.namer || this.namer
     this.add($('[data-control="' + this.name + '"]'))
   }
 
@@ -46,7 +47,7 @@
   , remove: function ($controls) {
       var control = this
       $controls.off('validated.formControl').each(function() {
-        var name = control.name($(this))
+        var name = control.namer($(this))
           , index = $.inArray(name, control.invalid)
 
         if (index > -1) control.invalid.splice(index, 1)
@@ -55,7 +56,7 @@
 
   , validated: function (e) {
       var ready = this.ready()
-        , name = this.name(e.validation.$element)
+        , name = this.namer(e.validation.$element)
         , index = $.inArray(name, this.invalid)
         , invalid = index > -1
 
@@ -69,7 +70,7 @@
 
   , updater: function (ready) {
       // setting both attr and data because JQuery does not pick up 'data'
-      //  from attributes that get set by attr after adding to the DOM
+      //
       this.$element
         .toggleClass('success', ready)
         .toggleClass('error', !ready)
@@ -77,7 +78,7 @@
         .trigger('validated.ready', {control: this, ready: ready})
     }
 
-  , name: function ($element) {
+  , namer: function ($element) {
       return $element.attr('name') || $element.attr('id')
     }
 
