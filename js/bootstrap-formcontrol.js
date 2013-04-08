@@ -75,7 +75,7 @@
         .toggleClass('success', ready)
         .toggleClass('error', !ready)
         .attr('data-ready', ready).data('ready', ready)
-        .trigger('validated.ready', {control: this, ready: ready})
+        .trigger('validatedReady', {control: this, ready: ready})
     }
 
   , namer: function ($element) {
