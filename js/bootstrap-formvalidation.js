@@ -50,9 +50,12 @@
     this.objectUpdater = this.options.objectUpdater || this.objectUpdater
     this.trimmer = this.options.trimmer || this.trimmer
     this.objectNames = this.options.objectNames || this.objectNames
+    this.matchTest = this.options.matchTest || this.matchTest
+    this.test = this.options.test || this.test
     this.equals = this.options.equals || this.equals
     this.setupListeners = this.options.setupListeners || this.setupListeners
     this.unwireListeners = this.options.unwireListeners || this.unwireListeners
+    this.check = this.options.check
     this.valid = this.options.valid
     this.matchValid = this.options.matchValid
     if (this.options.pattern) {
@@ -172,12 +175,14 @@
 
   , multiRetriever: function () {
       var checked = $("[name='" + this.$element.attr('name') + "']:checked")
-
       return checked.length ? checked.val() : ""
     }
 
   , singleRetriever: function () {
-      return this.$element.val()
+      if (this.$element.is("[type='checkbox']")) {
+        return this.$element.is(":checked") ? this.$element.val() : ""
+      }
+      else return this.$element.val()
     }
 
   , matchRetriever: function () {
@@ -193,17 +198,15 @@
       return value
     }
 
+  , matchTest: function (value) {
+      return this.equals(this.matchRetriever(), value)
+    }
+
   , test: function (value) {
       var valid
 
       if ($.isFunction(this.pattern)) valid = this.pattern(value)
       else valid = this.pattern.test(value)
-
-      if (this.match) {
-        this.matchValue = this.matchRetriever()
-        this.matchEmpty = this.checker(this.matchValue)
-        this.matchValid = this.equals(this.matchValue, value)
-      }
 
       return valid
     }
@@ -216,14 +219,23 @@
       // matching ignores the short-circuiting of no value changes to avoid
       //  complexities related to unknown details about matching that can be
       //  quickly overridden in this.test(...)
-      if (this.match || !this.equals(value, this.value)) {
+      // check allows one to skip the short circuiting without requiring match
+      //  behavior to be overridden
+      if (this.match || this.check || !this.equals(value, this.value)) {
         this.valid = this.test(value)
         this.value = value
+
+        if (this.match) {
+          this.matchValid = this.matchTest(value)
+        }
 
         // optional fields can be empty
         if (!this.required && this.empty && !this.valid) this.valid = true
 
-        if (this.valid || valid != this.valid || empty != this.empty) {
+        // if it's valid, always update (triggers)
+        // if it was valid, and no longer is, then update
+        // if it was empty, but no longer is, then update (triggers)
+        if (this.valid || valid || empty != this.empty) {
           this.empty = empty
 
           this.updater(value)
@@ -235,10 +247,10 @@
           this.$element.trigger({type: 'validated', validation: this, valid: valid})
 
           if (valid) {
-            this.$element.trigger({type: 'validated.valid', validation: this})
+            this.$element.trigger({type: 'validatedValid', validation: this})
           }
           else {
-            this.$element.trigger({type: 'validated.invalid', validation: this})
+            this.$element.trigger({type: 'validatedInvalid', validation: this})
           }
         }
       }
@@ -307,7 +319,8 @@
   }
 
   $.fn.formValidation.defaults = {
-    match: false
+    check: false
+  , match: false
   , matchValid: true
   , object: null
   , valid: true
