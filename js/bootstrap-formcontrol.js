@@ -24,6 +24,7 @@
    * =================================== */
   var FormControl = function (element, options) {
     this.invalid = []
+    this.$elements = []
     this.$element = $(element)
     this.options = $.extend({}, $.fn.formControl.defaults, options)
     this.name = this.options.name || this.$element.data('name') || this.$element.attr('id')
@@ -31,6 +32,7 @@
     this.add = this.options.add || this.add
     this.remove = this.options.remove || this.remove
     this.validated = this.options.validated || this.validated
+    this.invalidate = this.options.invalidate || this.invalidate
     this.updater = this.options.updater || this.updater
     this.namer = this.options.namer || this.namer
     this.add($('[data-control="' + this.name + '"]'))
@@ -50,19 +52,29 @@
         var name = that.namer($(this))
           , index = $.inArray(name, that.invalid)
 
-        if (index > -1) that.invalid.splice(index, 1)
+        if (index > -1) {
+            that.invalid.splice(index, 1)
+            that.$elements.splice(index, 1)
+        }
       })
     }
 
   , validated: function (e) {
       var ready = this.ready()
-        , name = this.namer(e.validation.$element)
+        , $element = e.validation.$element
+        , name = this.namer($element)
         , index = $.inArray(name, this.invalid)
         , invalid = index > -1
 
       if (e.valid === invalid) {
-        if (e.valid && invalid) this.invalid.splice(index, 1)
-        else if (!e.valid && !invalid) this.invalid.push(name)
+        if (e.valid && invalid) {
+            this.invalid.splice(index, 1)
+            this.$elements.splice(index, 1)
+        }
+        else if (!e.valid && !invalid) {
+            this.invalid.push(name)
+            this.$elements.push($element)
+        }
 
         if (ready !== this.ready()) this.updater(!ready)
       }
@@ -84,6 +96,12 @@
 
   , ready: function () {
       return this.invalid.length === 0
+    }
+
+  , invalidate: function () {
+      return $.each(this.$elements, function() {
+        $(this).formValidation('invalidate')
+      })
     }
   }
 
@@ -116,10 +134,8 @@
 
   /* FORMCONTROL DATA-API
    * ==================== */
-  $(document).on('focus.formControl.data-api', '[data-provide="formControl"]', function (e) {
-    var $this = $(this)
-    if ($this.data('formControl')) return
-    $this.formControl($this.data())
+  $(document).find('[data-provide*="formControl"]').each(function () {
+    $(this).formControl()
   })
 
 })(window.jQuery);
