@@ -41,6 +41,7 @@
     this.updater = this.options.updater || this.updater
     this.checker = this.options.checker || this.checker
     this.validate = this.options.validate || this.validate
+    this.invalidate = this.options.invalidate || this.invalidate
     this.retriever = this.options.retriever || this.retriever
     this.elementUpdater = this.options.elementUpdater || this.elementUpdater
     this.singleRetriever = this.options.singleRetriever || this.singleRetriever
@@ -129,6 +130,10 @@
       return isSupported
   }
 
+  , invalidate: function () {
+      this.elementUpdater(this.$element, true)
+    }
+
   , elementUpdater: function ($element, error) {
       $element.parents(".control-group")
         .toggleClass("error", error)
@@ -190,7 +195,7 @@
     }
 
   , retriever: function () {
-      var value = ""
+      var value
 
       if (this.multi) value = this.multiRetriever()
       else value = this.singleRetriever()
@@ -334,13 +339,5 @@
     $.fn.formValidation = old
     return this
   }
-
-  /* FORMVALIDATION DATA-API
-   * ======================= */
-  $(document).on('focus.formValidation.data-api', '[data-provide="formValidation"]', function (e) {
-    var $this = $(this)
-    if ($this.data('formValidation')) return
-    $this.formValidation($this.data())
-  })
 
 })(window.jQuery);
