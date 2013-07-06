@@ -153,7 +153,7 @@
    }
 
   , objectNames: function () {
-      return this.name.split(':')
+      return this.name.split(/[:\.]/)
     }
 
   , trimmer: function (value) {
